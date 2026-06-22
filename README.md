@@ -1,66 +1,120 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# Laravel Docker Template
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+> A ready-to-use Dockerized Laravel starter template — clone, configure, and `docker compose up`.
 
-## About Laravel
+[![Laravel](https://img.shields.io/badge/Laravel-FF2D20?logo=laravel&logoColor=white)](https://laravel.com)
+[![PHP 8.3](https://img.shields.io/badge/PHP-8.3-777BB4?logo=php&logoColor=white)](https://www.php.net)
+[![Docker](https://img.shields.io/badge/Docker-2496ED?logo=docker&logoColor=white)](https://www.docker.com)
+[![MySQL 8](https://img.shields.io/badge/MySQL-8.0-4479A1?logo=mysql&logoColor=white)](https://www.mysql.com)
+[![Nginx](https://img.shields.io/badge/Nginx-009639?logo=nginx&logoColor=white)](https://nginx.org)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+A ready-to-use Dockerized Laravel starter template — clone, configure, and `docker compose up`. It bundles PHP 8.3-FPM and Nginx into a single application image alongside a MySQL 8 service, and runs database migrations automatically when the container starts, so you can go from clone to running app in minutes.
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+## Features
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+- **PHP 8.3-FPM + Nginx in one image** — the application container serves the app on port 80 with no extra web-server container to wire up.
+- **MySQL 8 service** — a dedicated `db` service backed by a persistent volume.
+- **Automatic migrations** — the `app` service runs `php artisan migrate --force` on start.
+- **Preinstalled PHP extensions** — `gd` (with freetype/jpeg/webp), `pdo_mysql`, `mysqli`, and `zip` are built into the image.
+- **Persistent named volumes** — separate volumes for the application code (`app_data`) and the database (`db_data`).
+- **Configurable container prefix and DB port** — set `CONTAINER_NAME_PREFIX` and `DB_PORT` to avoid clashes across projects.
 
-## Learning Laravel
+## Tech Stack
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
+- **Laravel** — PHP `^8.2` (image `php:8.3-fpm`)
+- **Nginx** — web server (configured via `docker-nginx.conf`)
+- **MySQL 8** — database
+- **Docker Compose** — orchestration
 
-You may also try the [Laravel Bootcamp](https://bootcamp.laravel.com), where you will be guided through building a modern Laravel application from scratch.
+## Prerequisites
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+- [Docker](https://docs.docker.com/get-docker/)
+- [Docker Compose](https://docs.docker.com/compose/) (the bundled `docker compose` plugin)
 
-## Laravel Sponsors
+## Getting Started
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
+1. **Copy the environment file:**
 
-### Premium Partners
+   ```bash
+   cp .env.example .env
+   ```
 
-- **[Vehikl](https://vehikl.com/)**
-- **[Tighten Co.](https://tighten.co)**
-- **[WebReinvent](https://webreinvent.com/)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel/)**
-- **[Cyber-Duck](https://cyber-duck.co.uk)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Jump24](https://jump24.co.uk)**
-- **[Redberry](https://redberry.international/laravel/)**
-- **[Active Logic](https://activelogic.com)**
-- **[byte5](https://byte5.de)**
-- **[OP.GG](https://op.gg)**
+2. **Configure the environment.** Set the Compose-specific variables and align the Laravel `DB_*` values with the `db` service in `docker-compose.yml`:
+
+   ```env
+   # Compose settings
+   CONTAINER_NAME_PREFIX=myapp
+   DB_PORT=3306
+
+   # Laravel DB connection (DB_HOST is the Compose service name)
+   DB_CONNECTION=mysql
+   DB_HOST=db
+   DB_DATABASE=docker_db
+   DB_USERNAME=dev
+   DB_PASSWORD=dev
+   ```
+
+3. **Build and start the containers:**
+
+   ```bash
+   docker compose up -d --build
+   ```
+
+4. **Generate the application key:**
+
+   ```bash
+   docker compose exec app php artisan key:generate
+   ```
+
+The app is now served on port 80 of the `app` container, and the database is reachable on the host at `${DB_PORT}`.
+
+## Configuration
+
+| Variable | Description | Default |
+| -------- | ----------- | ------- |
+| `CONTAINER_NAME_PREFIX` | Prefix for the `app` and `db` container names | _(set in `.env`)_ |
+| `DB_PORT` | Host port mapped to the MySQL container's `3306` | _(set in `.env`)_ |
+| `MYSQL_DATABASE` | Database created on first run | `docker_db` |
+| `MYSQL_USER` | Application database user | `dev` |
+| `MYSQL_PASSWORD` | Application database password | `dev` |
+| `MYSQL_ROOT_PASSWORD` | MySQL root password | `rootadmin` |
+
+> The MySQL credentials above are development defaults defined in `docker-compose.yml`. Change them before any shared or production use.
+
+## Services
+
+| Service | Image / Build | Description | Ports |
+| ------- | ------------- | ----------- | ----- |
+| `app` | Built from `Dockerfile` | PHP 8.3-FPM + Nginx serving the Laravel app; runs migrations on start | `80` (container) |
+| `db` | `mysql:8.0` | MySQL 8 database with a persistent volume | `${DB_PORT}:3306` |
+
+## Common Commands
+
+```bash
+# Run any artisan command inside the app container
+docker compose exec app php artisan <command>
+
+# Follow the app container logs
+docker compose logs -f app
+
+# Stop and remove the containers
+docker compose down
+
+# Stop and remove the containers AND their volumes (drops the database)
+docker compose down -v
+```
+
+## Security
+
+See [SECURITY.md](SECURITY.md) for the security policy and how to report vulnerabilities.
+
+This template is intended for **local development**. It ships with default MySQL credentials (`dev`/`dev`, root `rootadmin`) and runs `chmod -R 777` on `storage`, `resources`, and `bootstrap/cache` for convenience. Change the credentials and tighten file permissions before any shared or production deployment.
 
 ## Contributing
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
-
-## Code of Conduct
-
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
-
-## Security Vulnerabilities
-
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+Contributions are welcome. Please open an issue to discuss significant changes first, then submit a pull request against the `master` branch.
 
 ## License
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+This project is licensed under the [MIT License](LICENSE).
